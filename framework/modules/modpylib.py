@@ -5,6 +5,10 @@ except ImportError:
 
 class PyLibModify(ModuleBase):
     @property
+    def tags(self):
+        return ['IntrusionSet2']
+
+    @property
     def needs_root(self):
         return True
 
@@ -16,8 +20,7 @@ class PyLibModify(ModuleBase):
     def absolute_duration(self):
         return 60 * 60
 
-    def run(self):
-        self.start()
+    def do_run(self):
         import inspect, time
         try:
             import requests
@@ -40,4 +43,12 @@ class PyLibModify(ModuleBase):
                 self.hec_logger('Restored contents of requests library', orig_size=len(data), dorked_size=offset)
             except Exception as e:
                 self.hec_logger(str(e), severity='error')
+
+    def run(self):
+        self.start()
+        try:
+            self.do_run()
+        except Exception as e:
+            self.hec_logger('Uncaught exception within module, exiting module gracefully', error=str(e),
+                            severity='error')
         self.finish()

@@ -5,6 +5,10 @@ except ImportError:
 
 class UserGroupPrivs(ModuleBase):
     @property
+    def tags(self):
+        return ['IntrusionSet3']
+
+    @property
     def needs_root(self):
         return True
 
@@ -36,8 +40,7 @@ class UserGroupPrivs(ModuleBase):
             self.hec_logger(str(e), severity='error')
             raise
 
-    def run(self):
-        self.start()
+    def do_run(self):
         import time, pwd
         from subprocess import check_call, PIPE
         username = '${USER_NAME}'
@@ -51,7 +54,6 @@ class UserGroupPrivs(ModuleBase):
                 should_del_user = True
             except Exception as e:
                 self.hec_logger(str(e), severity='error')
-                self.finish()
                 return
         cmd = 'usermod -a -G wheel {0}'.format(username)
         try:
@@ -59,7 +61,6 @@ class UserGroupPrivs(ModuleBase):
             self.hec_logger('Added user to a privileged group', username=username, group='wheel')
         except Exception as e:
             self.hec_logger(str(e), severity='error')
-            self.finish()
             return
         time.sleep(self.absolute_duration)
         try:
@@ -74,6 +75,12 @@ class UserGroupPrivs(ModuleBase):
                 self.remove_user(username)
             except Exception as e:
                 self.hec_logger(str(e), severity='error', username=username)
+
+    def run(self):
+        self.start()
+        try:
+            self.do_run()
+        except Exception as e:
+            self.hec_logger('Uncaught exception within module, exiting module gracefully', error=str(e),
+                            severity='error')
         self.finish()
-
-

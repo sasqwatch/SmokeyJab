@@ -6,6 +6,10 @@ except ImportError:
 
 class SetUidOvert(ModuleBase):
     @property
+    def tags(self):
+        return ['IntrusionSet2']
+
+    @property
     def relative_delay(self):
         return 40
 
@@ -13,8 +17,7 @@ class SetUidOvert(ModuleBase):
     def absolute_duration(self):
         return 24 * 60 * 60  # 1 day
 
-    def run(self):
-        self.start()
+    def do_run(self):
         import os, stat, shutil, time
         fname = '/tmp/bash'
         shutil.copyfile('/bin/sleep', fname)
@@ -25,4 +28,12 @@ class SetUidOvert(ModuleBase):
         self.hec_logger('Created setuid binary', filename=fname)
         time.sleep(self.absolute_duration)
         os.unlink(fname)
+
+    def run(self):
+        self.start()
+        try:
+            self.do_run()
+        except Exception as e:
+            self.hec_logger('Uncaught exception within module, exiting module gracefully', error=str(e),
+                            severity='error')
         self.finish()

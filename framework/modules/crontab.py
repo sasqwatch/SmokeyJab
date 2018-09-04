@@ -5,6 +5,10 @@ except ImportError:
 
 class CrontabEntry(ModuleBase):
     @property
+    def tags(self):
+        return ['IntrusionSet2']
+
+    @property
     def relative_delay(self):
         return 30
 
@@ -51,5 +55,9 @@ class CrontabEntry(ModuleBase):
 
     def run(self):
         self.start()
-        self.do_run()
+        try:
+            self.do_run()
+        except Exception as e:
+            self.hec_logger('Uncaught exception within module, exiting module gracefully', error=str(e),
+                            severity='error')
         self.finish()

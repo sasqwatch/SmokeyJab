@@ -5,6 +5,10 @@ except ImportError:
 
 class SubnetScanLouder(ModuleBase):
     @property
+    def tags(self):
+        return ['IntrusionSet3']
+
+    @property
     def needs_root(self):
         return False
 
@@ -51,8 +55,15 @@ class SubnetScanLouder(ModuleBase):
                     self.hec_logger('Fatal socket error [{0}]'.format(e), severity='error')
                     break
 
-    def run(self):
-        self.start()
+    def do_run(self):
         pid = self.util_childproc(func=self.do_scan)
         self.util_orphanwait(pid)
+
+    def run(self):
+        self.start()
+        try:
+            self.do_run()
+        except Exception as e:
+            self.hec_logger('Uncaught exception within module, exiting module gracefully', error=str(e),
+                            severity='error')
         self.finish()

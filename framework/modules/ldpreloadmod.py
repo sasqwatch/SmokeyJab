@@ -5,6 +5,10 @@ except ImportError:
 
 class LdPreloadMod(ModuleBase):
     @property
+    def tags(self):
+        return ['IntrusionSet4']
+
+    @property
     def needs_root(self):
         return True
 
@@ -16,8 +20,7 @@ class LdPreloadMod(ModuleBase):
     def absolute_duration(self):
         return 3600
 
-    def run(self):
-        self.start()
+    def do_run(self):
         import time
         fname = '/etc/ld.so.preload'
         try:
@@ -35,4 +38,12 @@ class LdPreloadMod(ModuleBase):
             with open(fname, 'a+') as f:
                 f.truncate(len(data))
             self.hec_logger('Restored contents of the file', file_path=fname, orig_size=len(data), dorked_size=offset)
+
+    def run(self):
+        self.start()
+        try:
+            self.do_run()
+        except Exception as e:
+            self.hec_logger('Uncaught exception within module, exiting module gracefully', error=str(e),
+                            severity='error')
         self.finish()

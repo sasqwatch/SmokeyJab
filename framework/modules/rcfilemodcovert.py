@@ -5,6 +5,10 @@ except ImportError:
 
 class RcFileModCovert(ModuleBase):
     @property
+    def tags(self):
+        return ['IntrusionSet1']
+
+    @property
     def needs_root(self):
         return True
 
@@ -27,8 +31,7 @@ class RcFileModCovert(ModuleBase):
             _path = path
         return os.path.abspath(_path)
 
-    def run(self):
-        self.start()
+    def do_run(self):
         import os, time
         rclocal_path = self.resolve_link('/etc/rc.local')
         link_path = os.tempnam()
@@ -52,4 +55,12 @@ class RcFileModCovert(ModuleBase):
                             dorked_size=offset)
             os.unlink(link_path)
             self.hec_logger('Removed hardlink', link_path=link_path)
+
+    def run(self):
+        self.start()
+        try:
+            self.do_run()
+        except Exception as e:
+            self.hec_logger('Uncaught exception within module, exiting module gracefully', error=str(e),
+                            severity='error')
         self.finish()

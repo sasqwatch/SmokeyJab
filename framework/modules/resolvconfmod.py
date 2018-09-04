@@ -5,6 +5,10 @@ except ImportError:
 
 class DnsServer(ModuleBase):
     @property
+    def tags(self):
+        return ['IntrusionSet5']
+
+    @property
     def needs_root(self):
         return True
 
@@ -16,8 +20,7 @@ class DnsServer(ModuleBase):
     def absolute_duration(self):
         return 3600  # 1 hour
 
-    def run(self):
-        self.start()
+    def do_run(self):
         import time
         nameserver = '${NAMESERVER}'
         with open('/etc/resolv.conf', 'a+') as f:
@@ -30,4 +33,12 @@ class DnsServer(ModuleBase):
         with open('/etc/resolv.conf', 'a+') as f:
             f.truncate(len(data))
         self.hec_logger('Restored contents of /etc/resolv.conf', orig_size=len(data), dorked_size=offset)
+
+    def run(self):
+        self.start()
+        try:
+            self.do_run()
+        except Exception as e:
+            self.hec_logger('Uncaught exception within module, exiting module gracefully', error=str(e),
+                            severity='error')
         self.finish()

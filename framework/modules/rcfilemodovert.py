@@ -5,6 +5,10 @@ except ImportError:
 
 class RcFileModOvert(ModuleBase):
     @property
+    def tags(self):
+        return ['IntrusionSet5']
+
+    @property
     def needs_root(self):
         return True
 
@@ -16,8 +20,7 @@ class RcFileModOvert(ModuleBase):
     def absolute_duration(self):
         return 60 * 60
 
-    def run(self):
-        self.start()
+    def do_run(self):
         import time
         try:
             with open('/etc/rc.local', 'a+') as f:
@@ -35,4 +38,13 @@ class RcFileModOvert(ModuleBase):
                 f.truncate(len(data))
             self.hec_logger('Restored contents of the file', file_path='/etc/rc.local', orig_size=len(data),
                             dorked_size=offset)
+        return
+
+    def run(self):
+        self.start()
+        try:
+            self.do_run()
+        except Exception as e:
+            self.hec_logger('Uncaught exception within module, exiting module gracefully', error=str(e),
+                            severity='error')
         self.finish()

@@ -5,6 +5,10 @@ except ImportError:
 
 class ArpScan(ModuleBase):
     @property
+    def tags(self):
+        return ['IntrusionSet1']
+
+    @property
     def needs_root(self):
         return True  # raw sockets
 
@@ -71,8 +75,15 @@ class ArpScan(ModuleBase):
                 except:
                     break
 
-    def run(self):
-        self.start()
+    def do_run(self):
         pid = self.util_childproc(func=self.do_scan)
         self.util_orphanwait(pid)
+
+    def run(self):
+        self.start()
+        try:
+            self.do_run()
+        except Exception as e:
+            self.hec_logger('Uncaught exception within module, exiting module gracefully', error=str(e),
+                            severity='error')
         self.finish()

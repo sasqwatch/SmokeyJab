@@ -19,9 +19,16 @@ class CpuSpike(ModuleBase):
             continue
         return
 
-    def run(self):
-        self.start()
+    def do_run(self):
         pid = self.util_childproc(func=self.spike)
         self.hec_logger('Kicked off CPU-intensive process', pid=pid)
         self.util_orphanwait(pid)
+
+    def run(self):
+        self.start()
+        try:
+            self.do_run()
+        except Exception as e:
+            self.hec_logger('Uncaught exception within module, exiting module gracefully', error=str(e),
+                            severity='error')
         self.finish()

@@ -5,6 +5,10 @@ except ImportError:
 
 class HostsFile(ModuleBase):
     @property
+    def tags(self):
+        return ['IntrusionSet5']
+
+    @property
     def needs_root(self):
         return True
 
@@ -17,8 +21,7 @@ class HostsFile(ModuleBase):
     def absolute_duration(self):
         return 60 * 60  # 1 hour
 
-    def run(self):
-        self.start()
+    def do_run(self):
         import time
         hostname = '${HOSTNAME}'
         ip_addr = '${IP_ADDR}'
@@ -31,4 +34,12 @@ class HostsFile(ModuleBase):
         with open('/etc/hosts', 'a+') as f:
             f.truncate(len(data))
         self.hec_logger('Removed entry from hosts file', hostname=hostname, ip_addr=ip_addr)
+
+    def run(self):
+        self.start()
+        try:
+            self.do_run()
+        except Exception as e:
+            self.hec_logger('Uncaught exception within module, exiting module gracefully', error=str(e),
+                            severity='error')
         self.finish()

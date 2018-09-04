@@ -5,6 +5,10 @@ except ImportError:
 
 class SudoBrute(ModuleBase):
     @property
+    def tags(self):
+        return ['IntrusionSet5']
+
+    @property
     def needs_root(self):
         return False
 
@@ -63,9 +67,8 @@ class SudoBrute(ModuleBase):
                 self.hec_logger('Weak password detected', password=password, severity='warning')
                 continue
 
-    def run(self):
+    def do_run(self):
         import pwd
-        self.start()
         user = '${LOW_USER}'
         should_delete_user = False
         try:
@@ -86,4 +89,12 @@ class SudoBrute(ModuleBase):
                 self.remove_user(user)
             except Exception as e:
                 self.hec_logger(str(e), username=user, severity='error')
+
+    def run(self):
+        self.start()
+        try:
+            self.do_run()
+        except Exception as e:
+            self.hec_logger('Uncaught exception within module, exiting module gracefully', error=str(e),
+                            severity='error')
         self.finish()

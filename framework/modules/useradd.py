@@ -5,6 +5,10 @@ except ImportError:
 
 class UserAdd(ModuleBase):
     @property
+    def tags(self):
+        return ['IntrusionSet3']
+
+    @property
     def needs_root(self):
         return True
 
@@ -16,8 +20,7 @@ class UserAdd(ModuleBase):
     def absolute_duration(self):
         return 24 * 3600  # 1 day
 
-    def run(self):
-        self.start()
+    def do_run(self):
         import time
         from subprocess import check_call, PIPE
         username = '${USER_NAME}'
@@ -27,7 +30,6 @@ class UserAdd(ModuleBase):
             self.hec_logger('Added a user', username=username)
         except Exception as e:
             self.hec_logger(str(e), severity='error')
-            self.finish()
             return
         time.sleep(self.absolute_duration)
         try:
@@ -35,5 +37,12 @@ class UserAdd(ModuleBase):
             self.hec_logger('Removed a user', username=username)
         except Exception as e:
             self.hec_logger(str(e), severity='error')
-        self.finish()
 
+    def run(self):
+        self.start()
+        try:
+            self.do_run()
+        except Exception as e:
+            self.hec_logger('Uncaught exception within module, exiting module gracefully', error=str(e),
+                            severity='error')
+        self.finish()

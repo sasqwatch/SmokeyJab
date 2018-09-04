@@ -5,6 +5,10 @@ except ImportError:
 
 class SystemBinMod(ModuleBase):
     @property
+    def tags(self):
+        return ['IntrusionSet4']
+
+    @property
     def needs_root(self):
         return True
 
@@ -16,8 +20,7 @@ class SystemBinMod(ModuleBase):
     def absolute_duration(self):
         return 5 * 60 * 60  # 5 hours
 
-    def run(self):
-        self.start()
+    def do_run(self):
         import shutil, time, os
         from hashlib import md5
         bin_file = '${SYSTEM_BINARY}'
@@ -39,4 +42,12 @@ class SystemBinMod(ModuleBase):
             self.hec_logger('Backup restored', src_fname=backup, dst_fname=bin_file)
         else:
             self.hec_logger('Backup failed, bailing', severity='warning')
+
+    def run(self):
+        self.start()
+        try:
+            self.do_run()
+        except Exception as e:
+            self.hec_logger('Uncaught exception within module, exiting module gracefully', error=str(e),
+                            severity='error')
         self.finish()

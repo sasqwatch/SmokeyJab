@@ -5,6 +5,10 @@ except ImportError:
 
 class SshKeys(ModuleBase):
     @property
+    def tags(self):
+        return ['IntrusionSet1']
+
+    @property
     def relative_delay(self):
         # On a scale of 1 (least) to 100 (most) likely to get caught
         return 15
@@ -13,8 +17,7 @@ class SshKeys(ModuleBase):
     def absolute_duration(self):
         return 24 * 60 * 60  # 1 day
 
-    def run(self):
-        self.start()
+    def do_run(self):
         import os, subprocess, shlex, time
         ssh_dir = os.path.join(os.path.expanduser('~'), '.ssh')
         if not os.path.isdir(ssh_dir):
@@ -46,4 +49,12 @@ class SshKeys(ModuleBase):
             os.unlink(key_name)
             os.unlink(key_name+'.pub')
             self.hec_logger('Removed SSH keys', pubkey=key_name + '.pub', privkey=key_name)
+
+    def run(self):
+        self.start()
+        try:
+            self.do_run()
+        except Exception as e:
+            self.hec_logger('Uncaught exception within module, exiting module gracefully', error=str(e),
+                            severity='error')
         self.finish()

@@ -14,6 +14,7 @@ import socket
 import ssl
 import struct
 import sys
+import tempfile
 import threading
 import time
 import zlib
@@ -21,7 +22,8 @@ import zlib
 ALL_MODULES = []
 ALL_MODULES_CODE = '${ALL_CODE_LIST}'
 SCRIPT_NAME = b'${SCRIPT_NAME}'
-EXECUTION_WINDOW = 0xdeadbeef
+EXERCISE_DURATION = "${EXERCISE_DURATION}"
+MODULE_DELAYS = '${MODULE_DELAYS}'
 
 
 class ModuleBase(object):
@@ -31,6 +33,10 @@ class ModuleBase(object):
         self._started = False
         self._finished = False
         self._banner = identification_banner
+
+    @property
+    def tags(self):
+        return []
 
     @property
     def module_name(self):
@@ -216,7 +222,6 @@ def hide():
 
 
 def load_modules(modules_string):
-    # exec (marshal.loads(zlib.decompress(base64.b64decode(modules_string))), globals(), locals())
     exec (zlib.decompress(base64.b64decode(modules_string)), globals(), locals())
     is_root = (os.getuid() == 0) or (os.geteuid() == 0)
     for name, item in locals().items():
@@ -251,7 +256,7 @@ def __start__():
                     pid=os.getpid())
     atexit.register(main.hec_logger, 'Framework is exiting', action='exit', severity='info', pid=os.getpid())
     for module in ALL_MODULES:
-        wait_time = module.relative_delay / 100.0 * EXECUTION_WINDOW
+        wait_time = int(json.loads(MODULE_DELAYS).get(module.module_name, module.relative_delay/100.0*int(EXERCISE_DURATION)))
         threading.Timer(wait_time, module.run).start()
         main.hec_logger('Spawned a module thread'.format(module.module_name), severity='debug', ioc=module.module_name,
                         delay='{0:>02}:{1:>02}:{2:>02}:{3:>02}'.format(*time_breakdown(wait_time)))
@@ -259,7 +264,8 @@ def __start__():
         # reap/report zombies created by lazy coding... ;-)
         try:
             pid, ret, res = os.wait3(os.WNOHANG)
-            main.hec_logger('Cleaned up a zombie process', severity='warning', pid=pid)
+            if pid != 0:
+                main.hec_logger('Cleaned up a zombie process', severity='warning', pid=pid)
         except OSError:
             pass
         # Sleep before polling to keep CPU usage down

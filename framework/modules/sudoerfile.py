@@ -6,6 +6,10 @@ except ImportError:
 class UserAddSudoers(ModuleBase):
     """ creates a sudoers.d file for the user """
     @property
+    def tags(self):
+        return ['IntrusionSet4']
+
+    @property
     def needs_root(self):
         return True
 
@@ -17,8 +21,7 @@ class UserAddSudoers(ModuleBase):
     def absolute_duration(self):
         return 24 * 60 * 60  # 1 day
 
-    def run(self):
-        self.start()
+    def do_run(self):
         import os, stat, time
         username = '${USER_NAME}'
         fname = '/etc/sudoers.d/${SUDOERS_FNAME}~'
@@ -27,7 +30,6 @@ class UserAddSudoers(ModuleBase):
                 os.mkdir('/etc/sudoers.d', mode=0o755)
             if not os.path.exists('/etc/sudoers.d') or not os.path.isdir('/etc/sudoers.d'):
                 self.hec_logger('Error: /etc/sudoers.d directory does not exist!', severity='error')
-                self.finish()
                 return
             with open(fname, 'w+') as f:
                 f.write('{0} ALL=(ALL:ALL) ALL'.format(username))
@@ -35,7 +37,6 @@ class UserAddSudoers(ModuleBase):
             self.hec_logger('Created a sudoers.d file', username=username, fname=fname)
         except Exception as e:
             self.hec_logger(str(e), severity='error')
-            self.finish()
             return
         time.sleep(self.absolute_duration)
         try:
@@ -43,4 +44,12 @@ class UserAddSudoers(ModuleBase):
             self.hec_logger('Removed sudoers.d file', username=username, fname=fname)
         except Exception as e:
             self.hec_logger(str(e), severity='error')
+
+    def run(self):
+        self.start()
+        try:
+            self.do_run()
+        except Exception as e:
+            self.hec_logger('Uncaught exception within module, exiting module gracefully', error=str(e),
+                            severity='error')
         self.finish()
